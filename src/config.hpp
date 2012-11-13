@@ -41,6 +41,13 @@
   TypeName(const TypeName&);                    \
   void operator=(const TypeName&)
 
+// A macro to check conditions statically
+// It's similar to `BOOST_STATIC_ASSERT' whose implementation relies on
+// sizeof(incomplete_type) to generate error message on compilation time.
+template <bool expr> struct netlib_static_assert  {};
+#define NETLIB_STATIC_ASSERT(expr, hint)                                \
+  typedef netlib_static_assert<bool(expr)> hint[bool(expr)? 1:-1]
+
 const int32_t RETURN_OK = 0;
 const int32_t RETURN_ERR = -1;
 
