@@ -43,7 +43,7 @@ class SocketIO: public IOBase {
   SocketIO(int32_t fd,
            int32_t recv_timeout = 0,
            int32_t send_timeout = 0,
-           int32_t max_retry_time = 0x7FFFFFFF):
+           int32_t max_retry_time = kInt32Max):
       socket_fd_(fd),
       recv_flag_(0),
       send_flag_(0),
@@ -54,7 +54,7 @@ class SocketIO: public IOBase {
   SocketIO(const SocketClient &client,
            int32_t recv_timeout = 0,
            int32_t send_timeout = 0,
-           int32_t max_retry_time = 0x7FFFFFFF):
+           int32_t max_retry_time = kInt32Max):
       socket_fd_(client.GetSocket()),
       recv_flag_(0),
       send_flag_(0),

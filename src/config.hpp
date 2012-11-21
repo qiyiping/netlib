@@ -33,8 +33,10 @@
 
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
-#include <stdint.h>
+#include <limits>
 #include <cstddef>
+#include <stdint.h>
+
 // A macro to disallow the copy constructor and operator= functions
 // This should be used in the private: declarations for a class
 #define DISALLOW_COPY_AND_ASSIGN(TypeName)      \
@@ -50,5 +52,22 @@ template <bool expr> struct netlib_static_assert  {};
 
 const int32_t RETURN_OK = 0;
 const int32_t RETURN_ERR = -1;
+
+const int8_t kInt8Min = std::numeric_limits<int8_t>::min();
+const int16_t kInt16Min = std::numeric_limits<int16_t>::min();
+const int32_t kInt32Min = std::numeric_limits<int32_t>::min();
+const int64_t kInt64Min = std::numeric_limits<int64_t>::min();
+const uint8_t kUInt8Min = std::numeric_limits<uint8_t>::min();
+const uint16_t kUInt16Min = std::numeric_limits<uint16_t>::min();
+const uint32_t kUInt32Min = std::numeric_limits<uint32_t>::min();
+const uint64_t kUInt64Min = std::numeric_limits<uint64_t>::min();
+const int8_t kInt8Max = std::numeric_limits<int8_t>::max();
+const int16_t kInt16Max = std::numeric_limits<int16_t>::max();
+const int32_t kInt32Max = std::numeric_limits<int32_t>::max();
+const int64_t kInt64Max = std::numeric_limits<int64_t>::max();
+const uint8_t kUInt8Max = std::numeric_limits<uint8_t>::max();
+const uint16_t kUInt16Max = std::numeric_limits<uint16_t>::max();
+const uint32_t kUInt32Max = std::numeric_limits<uint32_t>::max();
+const uint64_t kUInt64Max = std::numeric_limits<uint64_t>::max();
 
 #endif /* _CONFIG_H_ */
