@@ -17,6 +17,7 @@ src/socket_server.cpp
 src/thread_pool_socket_server.cpp
 src/simple_socket_server.cpp
 src/buffer_io.cpp
+src/bit_mutex.cpp
 """)
 
 env.Library('netlib', netlib_src)
@@ -34,3 +35,4 @@ if build_test:
     env.Program('simple_server_test', ['tests/simple_socket_server_test.cpp', 'libnetlib.a'])
     env.Program('uf_test', ['tests/uf_test.cpp', 'libnetlib.a'])
     env.Program('buffer_io_test', ['tests/buffer_io_test.cpp', 'libnetlib.a'])
+    env.Program('bit_mutex_test', ['tests/bit_mutex_test.cpp', 'libnetlib.a'])
