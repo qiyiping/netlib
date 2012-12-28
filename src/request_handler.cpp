@@ -44,7 +44,6 @@ int32_t RequestHandler::SyncRecvRequest(int32_t fd,
                                         boost::shared_ptr<std::string> request) {
   request->clear();
   SocketIO io(fd, timeout_, timeout_);
-  io.SetNonblockingRecv();
   if (io.ReadString(request.get()) > 0) return RETURN_OK;
   return RETURN_ERR;
 }
@@ -52,7 +51,6 @@ int32_t RequestHandler::SyncRecvRequest(int32_t fd,
 int32_t RequestHandler::SyncSendResponse(int32_t fd,
                                          boost::shared_ptr<std::string> response) {
   SocketIO io(fd, timeout_, timeout_);
-  io.SetNonblockingSend();
   if (io.WriteString(*response) > 0) return RETURN_OK;
   return RETURN_ERR;
 }

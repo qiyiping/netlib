@@ -32,54 +32,76 @@
  */
 #include "socket_io.hpp"
 #include <errno.h>
+#include <sys/select.h>
 #include "time.hpp"
 
 namespace netlib {
 int32_t SocketIO::ReadBytes(void *ptr, uint32_t size) {
-  int32_t retry_time = 0;
-  int64_t end_time = GetMilliSeconds() + recv_timeout_;
-  int32_t ret = 0;
-  while ((retry_time++) < max_retry_time_) {
-    ret = recv(socket_fd_, ptr, size, recv_flag_);
-    if (ret >= 0){
-      break;
-    } else if (ret == -1) {
+  fd_set rfds;
+  FD_ZERO(&rfds);
+  FD_SET(socket_fd_, &rfds);
+  struct timeval tv;
+  struct timeval *timeout = NULL;
+  if (recv_timeout_ >= 0) {
+    MilliSecondsToTimeval(recv_timeout_, &tv);
+    timeout = &tv;
+  }
+  int32_t nfds = 0;
+
+  while (true) {
+    nfds = select(socket_fd_+1, &rfds, NULL, NULL, timeout);
+    if (nfds < 0) {
       int32_t errno_copy = errno;
-      if (errno_copy == EAGAIN) {
-        usleep(kSleepUsecs);
-      } else {
-        break;
+      if (errno_copy == EINTR || errno_copy == EAGAIN || errno_copy == EWOULDBLOCK) {
+        continue;
       }
     }
-    if (GetMilliSeconds() > end_time) { // timeout
-      break;
-    }
+    break;
   }
-  return ret;
+
+  if (nfds == 0) // timeout expires
+    return -1;
+
+  if (!FD_ISSET(socket_fd_, &rfds))
+    return -1;
+
+  int32_t recv_ret = recv(socket_fd_, ptr, size, 0);
+  return recv_ret;
 }
 
 int32_t SocketIO::WriteBytes(const void *ptr, uint32_t size) {
-  int32_t retry_time = 0;
-  int64_t end_time = GetMilliSeconds() + recv_timeout_;
-  int32_t ret = 0;
-  while ((retry_time++) < max_retry_time_) {
-    ret = send(socket_fd_, ptr, size, send_flag_);
-    if (ret >= 0){
-      break;
-    } else if (ret == -1) {
+  fd_set wfds;
+  FD_ZERO(&wfds);
+  FD_SET(socket_fd_, &wfds);
+  struct timeval tv;
+  struct timeval *timeout = NULL;
+  if (send_timeout_ >= 0) {
+    MilliSecondsToTimeval(send_timeout_, &tv);
+    timeout = &tv;
+  }
+  int32_t nfds = 0;
+
+  while (true) {
+    nfds = select(socket_fd_+1, NULL, &wfds, NULL, timeout);
+    if (nfds < 0) {
       int32_t errno_copy = errno;
-      if (errno_copy == EAGAIN){
-        usleep(kSleepUsecs);
-      } else {
-        break;
+      if (errno_copy == EINTR || errno_copy == EAGAIN || errno_copy == EWOULDBLOCK) {
+        continue;
       }
     }
-    if (GetMilliSeconds() > end_time) { // timeout
-      break;
-    }
+    break;
   }
-  return ret;
+
+  if (nfds == 0) // timeout expires
+    return -1;
+
+  if (!FD_ISSET(socket_fd_, &wfds))
+    return -1;
+
+  int32_t send_ret = send(socket_fd_, ptr, size, 0);
+  return send_ret;
 }
+
 int32_t SocketIO::ReadString(std::string *str) {
   char buf[1024*1024];
   str->clear();

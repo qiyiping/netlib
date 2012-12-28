@@ -41,47 +41,26 @@ namespace netlib {
 class SocketIO: public IOBase {
  public:
   SocketIO(int32_t fd,
-           int32_t recv_timeout = 0,
-           int32_t send_timeout = 0,
-           int32_t max_retry_time = kInt32Max):
+           int32_t recv_timeout = -1,
+           int32_t send_timeout = -1):
       socket_fd_(fd),
-      recv_flag_(0),
-      send_flag_(0),
       recv_timeout_(recv_timeout),
-      send_timeout_(send_timeout),
-      max_retry_time_(max_retry_time) {}
+      send_timeout_(send_timeout) {}
 
   SocketIO(const SocketClient &client,
-           int32_t recv_timeout = 0,
-           int32_t send_timeout = 0,
-           int32_t max_retry_time = kInt32Max):
+           int32_t recv_timeout = -1,
+           int32_t send_timeout = -1):
       socket_fd_(client.GetSocket()),
-      recv_flag_(0),
-      send_flag_(0),
       recv_timeout_(recv_timeout),
-      send_timeout_(send_timeout),
-      max_retry_time_(max_retry_time) {}
+      send_timeout_(send_timeout) {}
 
   int32_t GetSocket() const { return socket_fd_; }
   void SetSocket(int32_t fd) { socket_fd_ = fd; }
-
-  int32_t GetSendFlag() const { return send_flag_; }
-  void SetSendFlag(int32_t flag) { send_flag_ = flag; }
-  int32_t GetRecvFlag() const { return recv_flag_; }
-  void SetRecvFlag(int32_t flag) { recv_flag_ = flag; }
 
   int32_t GetSendTimeout() const { return send_timeout_; }
   void SetSendTimeout(int32_t timeout) { send_timeout_ = timeout; }
   int32_t GetRecvTimeout() const { return recv_timeout_; }
   void SetRecvTimeout(int32_t timeout) { recv_timeout_ = timeout; }
-
-  int32_t GetRetryTimes() const { return max_retry_time_; }
-  void SetRetryTimes(int32_t retry_time) { max_retry_time_ = retry_time; }
-
-  void SetNonblockingRecv() { recv_flag_ |= MSG_DONTWAIT; }
-  void UnsetNonblockingRecv() { recv_flag_ &= (~MSG_DONTWAIT); }
-  void SetNonblockingSend() { send_flag_ |= MSG_DONTWAIT; }
-  void UnsetNonblockingSend() { send_flag_ &= (~MSG_DONTWAIT); }
 
   bool Peek();
 
@@ -93,16 +72,10 @@ class SocketIO: public IOBase {
  protected:
   int32_t socket_fd_;
 
-  int32_t recv_flag_;
-  int32_t send_flag_;
-
   // time out in milliseconds
   int32_t recv_timeout_;
   int32_t send_timeout_;
 
-  int32_t max_retry_time_;
-
-  static const int32_t kSleepUsecs = 1000;
   DISALLOW_COPY_AND_ASSIGN(SocketIO);
 };
 }

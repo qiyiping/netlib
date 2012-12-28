@@ -46,7 +46,7 @@ class Thread {
     STOPPED,
   };
 
-  Thread(bool detached):detached_(detached), state_(UNINITIALIZED) {}
+  Thread(bool detachable):detachable_(detachable), state_(UNINITIALIZED) {}
 
   void Start();
   void Join();
@@ -54,7 +54,7 @@ class Thread {
   pthread_t GetId() { return thread_; }
 
   virtual ~Thread() {
-    if (!detached_ && state_ == RUNNING) {
+    if (!detachable_ && state_ == RUNNING) {
       Join();
     }
   }
@@ -65,7 +65,7 @@ class Thread {
   virtual void Run() = 0;
  private:
   pthread_t thread_;
-  bool detached_;
+  bool detachable_;
   State state_;
 };
 
@@ -77,7 +77,7 @@ void Thread::Start() {
   }
   pthread_attr_t attr;
   CHECK_EQ(pthread_attr_init(&attr), 0);
-  if (detached_) {
+  if (detachable_) {
     CHECK_EQ(pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED), 0);
   } else {
     CHECK_EQ(pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_JOINABLE), 0);
@@ -93,7 +93,7 @@ void Thread::Join() {
     LOG(ERROR) << "thread is not running";
     return;
   }
-  if (!detached_) {
+  if (!detachable_) {
     void *value;
     int32_t ret = pthread_join(thread_, &value);
     if ( ret != 0) {

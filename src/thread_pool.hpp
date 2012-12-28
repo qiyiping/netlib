@@ -78,9 +78,10 @@ class ThreadPool {
   ThreadPool(uint32_t nworkers, uint32_t queue_limits);
   void AddTask(const TaskCallback &task) { task_queue_->Push(task); }
   // wait for all the tasks to be finished
-  void WaitAllTasks();
-  // stop all the workers even thought there are remaining tasks in the task queue
   void Join();
+
+  // stop all the workers even thought there are remaining tasks in the task queue
+  void Stop();
  private:
   std::vector<boost::shared_ptr<Worker> > workers_;
   boost::scoped_ptr<TaskQueue> task_queue_;
@@ -99,15 +100,15 @@ ThreadPool::ThreadPool(uint32_t nworkers, uint32_t queue_limits) {
 }
 
 inline
-void ThreadPool::WaitAllTasks() {
+void ThreadPool::Join() {
   while (!task_queue_->Empty()) {
     usleep(10);
   }
-  Join();
+  Stop();
 }
 
 inline
-void ThreadPool::Join() {
+void ThreadPool::Stop() {
   for (uint32_t i = 0; i < workers_.size(); ++i) {
     workers_[i]->Stop();
   }

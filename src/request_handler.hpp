@@ -40,7 +40,7 @@
 namespace netlib {
 class RequestHandler {
  public:
-  RequestHandler(int32_t timeout = 1000*60): timeout_(timeout) {}
+  RequestHandler(int32_t timeout = -1): timeout_(timeout) {}
 
 
   void AsyncRecvRequest(EventLoop *el, int32_t fd, boost::shared_ptr<std::string> request);

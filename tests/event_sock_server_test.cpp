@@ -21,7 +21,7 @@ void PrintTime(EventLoop *el, int32_t id) {
 }
 
 int main(int argc, char *argv[]) {
-  EventSocketServer server("localhost", "10007",
+  EventSocketServer server("0.0.0.0", "10007",
                            boost::make_shared<MyHandler>(),
                            boost::make_shared<EventLoop>(boost::make_shared<EpollSocketEventHandler>()));
   server.GetEventLoop()->AddTimeEvent(0, 1000*5, PrintTime);

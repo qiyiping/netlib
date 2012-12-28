@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     threadpool.AddTask(std::tr1::bind(mycalc, end, end+step, r+i));
     end += step;
   }
-  threadpool.WaitAllTasks();
+  threadpool.Join();
   int64_t r1 = 0;
   for (int32_t i = 0; i < kSegs; ++i) {
     r1 += r[i];

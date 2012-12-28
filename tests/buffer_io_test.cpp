@@ -8,6 +8,7 @@ int main(int argc, char *argv[]) {
   io.WriteInt32(1021);
   io.WriteDouble(3.14159);
   io.WriteString("buffer io test");
+  LOG(INFO) << io.GetBuffer();
   int32_t a = 0;
   io.ReadInt32(&a);
   LOG(INFO) << a;

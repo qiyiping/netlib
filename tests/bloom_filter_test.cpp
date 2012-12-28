@@ -7,9 +7,11 @@ int main(int argc, char *argv[]) {
   filter.Insert("www.163.com");
   LOG(INFO) << "www.qq.com: " << filter.Exists("www.qq.com");
   LOG(INFO) << "www.163.com: " << filter.Exists("www.163.com");
+  LOG(INFO) << "www.sina.com.cn: " << filter.Exists("www.sina.com.cn");
   filter.WriteToFile("filter.bin");
   BloomFilter ff("filter.bin");
-  LOG(INFO) << "www.qq.com: " << ff.Exists("www.qq.com");
-  LOG(INFO) << "www.163.com: " << ff.Exists("www.163.com");
+  LOG(INFO) << "www.qq.com: " << filter.Exists("www.qq.com");
+  LOG(INFO) << "www.163.com: " << filter.Exists("www.163.com");
+  LOG(INFO) << "www.sina.com.cn: " << filter.Exists("www.sina.com.cn");
   return 0;
 }

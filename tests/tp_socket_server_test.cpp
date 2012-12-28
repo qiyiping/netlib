@@ -14,7 +14,7 @@ class MyHandler: public RequestHandler {
 
 
 int main(int argc, char *argv[]) {
-  TPSocketServer server("localhost",
+  TPSocketServer server("0.0.0.0",
                         "10007",
                         boost::make_shared<MyHandler>(),
                         boost::make_shared<ThreadPool>(10, 1000));

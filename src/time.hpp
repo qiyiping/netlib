@@ -52,6 +52,16 @@ inline int64_t GetMicroSeconds() {
   return (tv.tv_sec*1000000+tv.tv_usec);
 }
 
+inline void MilliSecondsToTimeval(int64_t ms, struct timeval *tv) {
+  tv->tv_sec = ms/1000;
+  tv->tv_usec = (ms%1000)*1000;
+}
+
+inline void MicroSecondsToTimeval(int64_t us, struct timeval *tv) {
+  tv->tv_sec = us/1000000;
+  tv->tv_usec = (us%1000000);
+}
+
 inline void MilliSecondsToTimespec(int64_t ms, struct timespec *ts) {
   ts->tv_sec = ms/1000;
   ts->tv_nsec = (ms%1000)*1000000;
