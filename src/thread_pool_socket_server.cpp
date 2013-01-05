@@ -15,13 +15,10 @@ void TPSocketServer::Serve() {
 void TPSocketServer::Handle(int32_t fd) {
   boost::shared_ptr<std::string> request(new std::string);
   boost::shared_ptr<std::string> response(new std::string);
-  int32_t status;
   while (true) {
-    status = request_handler_->SyncRecvRequest(fd, request);
-    if (status == RETURN_ERR) break;
+    if (request_handler_->SyncRecvRequest(fd, request) == RETURN_ERR) break;
     request_handler_->Process(request, response);
-    status = request_handler_->SyncSendResponse(fd, response);
-    if (status == RETURN_ERR) break;
+    if (request_handler_->SyncSendResponse(fd, response) == RETURN_ERR) break;
   }
   close(fd);
 }

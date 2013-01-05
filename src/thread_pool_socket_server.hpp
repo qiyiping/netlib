@@ -45,7 +45,7 @@ class TPSocketServer:public SocketServer {
                  const std::string &port,
                  boost::shared_ptr<RequestHandler> handler,
                  boost::shared_ptr<ThreadPool> thread_pool):
-      SocketServer(addr, port, false),
+      SocketServer(addr, port),
       request_handler_(handler),
       thread_pool_(thread_pool) {}
 

@@ -47,9 +47,11 @@ class EventSocketServer: public SocketServer {
                     const std::string &port,
                     boost::shared_ptr<RequestHandler> handler,
                     boost::shared_ptr<EventLoop> el):
-      SocketServer(addr, port, true),
+      SocketServer(addr, port),
       request_handler_(handler),
-      eventloop_(el) {}
+      eventloop_(el) {
+    SetSocketNonblocking(listener_fd_);
+  }
 
   boost::shared_ptr<EventLoop> GetEventLoop() { return eventloop_; }
 

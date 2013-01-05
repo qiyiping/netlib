@@ -31,6 +31,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "net.hpp"
+#include <boost/lexical_cast.hpp>
 #include <glog/logging.h>
 
 namespace netlib {
@@ -47,7 +48,32 @@ int32_t SetSocketNonblocking(int32_t fd) {
   return RETURN_OK;
 }
 
-int32_t Connect(const std::string &addr, const std::string &port, bool nonblocking) {
+void ParseAddressInfo(const struct addrinfo *rp,
+                      std::string *version,
+                      std::string *address,
+                      std::string *port) {
+  char ipstr[INET6_ADDRSTRLEN];
+  void *in_addr = NULL;
+  int32_t in_port = 0;
+  if (rp->ai_family == AF_INET) {
+    *version = "IPv4";
+    struct sockaddr_in *v4 = reinterpret_cast<sockaddr_in *>(rp->ai_addr);
+    in_addr = &(v4->sin_addr);
+    in_port = ntohs(v4->sin_port);
+  } else {
+    *version = "IPv6";
+    struct sockaddr_in6 *v6 = reinterpret_cast<sockaddr_in6 *>(rp->ai_addr);
+    in_addr = &(v6->sin6_addr);
+    in_port = ntohs(v6->sin6_port);
+  }
+
+  inet_ntop(rp->ai_family, in_addr, ipstr, sizeof(ipstr));
+  address->assign(ipstr);
+
+  *port = boost::lexical_cast<std::string>(in_port);
+}
+
+int32_t CreateClientSocket(const std::string &addr, const std::string &port) {
   struct addrinfo hints, *result, *rp;
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC;
@@ -68,22 +94,72 @@ int32_t Connect(const std::string &addr, const std::string &port, bool nonblocki
       continue;
     }
 
-    if (connect(fd, rp->ai_addr, rp->ai_addrlen) != 0) {
-      LOG(WARNING) << "failed to connect.";
-      close(fd);
-      continue;
-    }
-
-    if (!nonblocking || SetSocketNonblocking(fd) == RETURN_OK)
+    if (connect(fd, rp->ai_addr, rp->ai_addrlen) == 0)
       break;
 
-    LOG(WARNING) << "failed to set socket fd nonblocking.";
+    LOG(WARNING) << "failed to connect.";
     close(fd);
   }
 
   if (!rp) {
-    LOG(ERROR) << "could not connect";
+    LOG(ERROR) << "could not create client socket";
     fd = -1;
+  } else {
+    std::string version, address, port;
+    ParseAddressInfo(rp, &version, &address, &port);
+    LOG(INFO) << "protocol version: " << version;
+    LOG(INFO) << "address: " << address;
+    LOG(INFO) << "port: " << port;
+  }
+
+  freeaddrinfo(result);
+  return fd;
+}
+
+int32_t CreateServerSocket(const std::string &addr, const std::string &port) {
+  struct addrinfo hints;
+  struct addrinfo *result, *rp;
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
+  const char *addr_ptr = NULL;
+  if (!addr.empty())
+    addr_ptr = addr.c_str();
+  const char *port_ptr = NULL;
+  if (!port.empty())
+    port_ptr = port.c_str();
+  int32_t status = getaddrinfo(addr_ptr, port_ptr, &hints, &result);
+  if (status != 0) {
+    LOG(ERROR) << gai_strerror(status);
+    freeaddrinfo(result);
+    return -1;
+  }
+
+  int fd = -1;
+  for (rp = result; rp != NULL; rp = rp->ai_next) {
+    fd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+
+    if (fd == -1) {
+      LOG(WARNING) << "failed to create a socket.";
+      continue;
+    }
+
+    if (bind(fd, rp->ai_addr, rp->ai_addrlen) == 0)
+      break;
+
+    LOG(WARNING) << "failed to bind.";
+    close(fd);
+  }
+
+  if (!rp) {
+    LOG(ERROR) << "could not create server socket";
+    fd = -1;
+  } else {
+    std::string version, address, port;
+    ParseAddressInfo(rp, &version, &address, &port);
+    LOG(INFO) << "protocol version: " << version;
+    LOG(INFO) << "address: " << address;
+    LOG(INFO) << "port: " << port;
   }
 
   freeaddrinfo(result);

@@ -51,7 +51,9 @@ bool SocketClient::Open(bool force_open) {
   }
 
   Close();
-  fd_ = Connect(peer_address_, peer_port_, nonblocking_);
+  fd_ = CreateClientSocket(peer_address_, peer_port_);
+  if (nonblocking_)
+    SetSocketNonblocking(fd_);
   return fd_ >= 0;
 }
 

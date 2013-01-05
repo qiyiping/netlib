@@ -45,7 +45,12 @@
 
 namespace netlib {
 int32_t SetSocketNonblocking(int32_t fd);
-int32_t Connect(const std::string &addr, const std::string &port, bool nonblocking);
+void ParseAddressInfo(const struct addrinfo *rp,
+                      std::string *ip_version,
+                      std::string *ip_address,
+                      std::string *port);
+int32_t CreateClientSocket(const std::string &addr, const std::string &port);
+int32_t CreateServerSocket(const std::string &addr, const std::string &port);
 }
 
 #endif /* _NET_H_ */

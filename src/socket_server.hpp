@@ -39,7 +39,7 @@
 namespace netlib {
 class SocketServer {
  public:
-  SocketServer(const std::string &addr, const std::string &port, bool nonblocking);
+  SocketServer(const std::string &addr, const std::string &port);
   virtual ~SocketServer();
   virtual void Serve() = 0;
 
@@ -49,11 +49,9 @@ class SocketServer {
 
   std::string GetPort() const { return port_; }
   std::string GetAddress() const { return address_; }
-  std::string GetAddressFamily() const { return ip_version_; }
  protected:
   std::string address_;
   std::string port_;
-  std::string ip_version_;
   int32_t listener_fd_;
  private:
   DISALLOW_COPY_AND_ASSIGN(SocketServer);

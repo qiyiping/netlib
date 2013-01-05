@@ -42,7 +42,7 @@ class SimpleSocketServer: public SocketServer {
   SimpleSocketServer(const std::string &host,
                      const std::string &port,
                      boost::shared_ptr<RequestHandler> handler):
-      SocketServer(host, port, false), request_handler_(handler) {}
+      SocketServer(host, port), request_handler_(handler) {}
   virtual void Serve();
  private:
   void Handle(int32_t fd);
