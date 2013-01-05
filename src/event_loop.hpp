@@ -37,8 +37,6 @@
 #include "config.hpp"
 #include "socket_event.hpp"
 #include "time_event.hpp"
-#include <map>
-#include <vector>
 #include <boost/shared_ptr.hpp>
 
 namespace netlib {

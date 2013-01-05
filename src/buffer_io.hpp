@@ -33,7 +33,6 @@
 #ifndef _BUFFER_IO_H_
 #define _BUFFER_IO_H_
 #include <string>
-#include <algorithm>
 #include "io.hpp"
 namespace netlib {
 class BufferIO: public IOBase {

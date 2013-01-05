@@ -35,7 +35,6 @@
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
-#include <algorithm>
 #include "io.hpp"
 
 namespace netlib {
