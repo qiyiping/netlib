@@ -35,7 +35,7 @@
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
-#include "io.hpp"
+#include "binary_io.hpp"
 
 namespace netlib {
 enum FileOpenMode {
@@ -45,7 +45,7 @@ enum FileOpenMode {
   OPEN_APPEND = 4,
 };
 
-class File: public IOBase {
+class File: public BinaryIO {
  public:
   File(): file_(NULL), mode_(OPEN_NONE) {}
   File(const std::string &path, uint32_t mode = OPEN_READ);

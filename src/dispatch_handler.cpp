@@ -30,30 +30,56 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _BUFFER_IO_H_
-#define _BUFFER_IO_H_
-#include <string>
-#include "binary_io.hpp"
+#include "dispatch_handler.hpp"
+#include "buffer_io.hpp"
+#include <glog/logging.h>
+
 namespace netlib {
-class BufferIO: public BinaryIO {
- public:
-  BufferIO(): pos_(0) {}
-  BufferIO(const std::string &str): buffer_(str), pos_(0) {}
-
-  const std::string &GetBuffer() const { return buffer_; }
-
-  int32_t ReadBytes(void *buf, uint32_t size);
-  int32_t WriteBytes(const void *buf, uint32_t size);
-  int32_t SkipBytes(uint32_t size);
-
-  int32_t ReadString (std::string *str);
-  int32_t WriteString(const std::string &str);
- private:
-  std::string buffer_;
-  uint32_t pos_;
-
-  DISALLOW_COPY_AND_ASSIGN(BufferIO);
-};
+std::string BuildHeader(const std::string &id) {
+  BufferIO io;
+  io.WriteUInt8(id.length());
+  io.WriteString(id);
+  return io.GetBuffer();
 }
 
-#endif /* _BUFFER_IO_H_ */
+std::string ParseHeader(const std::string &str) {
+  BufferIO io;
+  io.WriteBytes(str.c_str(), 1);
+  uint8_t len = 0;
+  std::string ret;
+  if (io.ReadUInt8(&len) == 1 && str.length() > 1u+len) {
+    ret = str.substr(1, len);
+  } else {
+    LOG(ERROR) << "failed to parse header";
+  }
+  return ret;
+}
+
+DispatchHandler::~DispatchHandler() {}
+
+void DispatchHandler::Process(boost::shared_ptr<std::string> request, boost::shared_ptr<std::string> response) {
+  std::string id = ParseHeader(*request);
+  if (processor_map_.find(id) == processor_map_.end()) {
+    LOG(ERROR) << "cannot find & execute processor: " << id;
+    return;
+  }
+  processor_map_[id](request, response);
+}
+
+bool DispatchHandler::AddProcessor(const std::string &id, const ProcessorType &processor) {
+  processor_map_[id] = processor;
+  return true;
+}
+
+bool DispatchHandler::DeleteProcessor(const std::string &id) {
+  std::map<std::string, ProcessorType>::iterator iter;
+  iter = processor_map_.find(id);
+  if (iter == processor_map_.end()) {
+    LOG(ERROR) << "cannot find & delete processor: " << id;
+    return false;
+  }
+  processor_map_.erase(iter);
+  return true;
+}
+
+}

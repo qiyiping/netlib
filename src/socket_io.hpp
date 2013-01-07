@@ -32,13 +32,13 @@
  */
 #ifndef _SOCKET_IO_H_
 #define _SOCKET_IO_H_
-#include "io.hpp"
+#include "binary_io.hpp"
 #include <sys/socket.h>
 #include <algorithm>
 #include "socket_client.hpp"
 
 namespace netlib {
-class SocketIO: public IOBase {
+class SocketIO: public BinaryIO {
  public:
   SocketIO(int32_t fd,
            int32_t recv_timeout = -1,

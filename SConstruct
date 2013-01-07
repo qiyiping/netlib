@@ -18,6 +18,7 @@ src/thread_pool_socket_server.cpp
 src/simple_socket_server.cpp
 src/buffer_io.cpp
 src/bit_mutex.cpp
+src/dispatch_handler.cpp
 """)
 
 env.Library('netlib', netlib_src)
@@ -36,3 +37,8 @@ if build_test:
     env.Program('uf_test', ['tests/uf_test.cpp', 'libnetlib.a'])
     env.Program('buffer_io_test', ['tests/buffer_io_test.cpp', 'libnetlib.a'])
     env.Program('bit_mutex_test', ['tests/bit_mutex_test.cpp', 'libnetlib.a'])
+
+build_samples = ARGUMENTS.get('build_samples', False)
+if build_samples:
+    env.Program('calc_server', ['samples/calc/calc_server.cpp', 'libnetlib.a'])
+    env.Program('calc_client', ['samples/calc/calc_client.cpp', 'libnetlib.a'])

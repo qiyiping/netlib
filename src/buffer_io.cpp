@@ -42,8 +42,17 @@ int32_t BufferIO::ReadBytes(void *buf, uint32_t size) {
   pos_ += size;
   return size;
 }
+
 int32_t BufferIO::WriteBytes(const void *buf, uint32_t size) {
   buffer_.append(static_cast<const char *>(buf), size);
+  return size;
+}
+
+int32_t BufferIO::SkipBytes(uint32_t size) {
+  if (pos_+size > buffer_.length()) {
+    return -1;
+  }
+  pos_ += size;
   return size;
 }
 
