@@ -64,6 +64,7 @@ void BitMutex::Lock(uint64_t id, uint64_t try_count) const {
     } else if (__sync_bool_compare_and_swap(ptr, oldval, newval)) {
       break;
     }
+    cnt++;
     if (cnt >= try_count) {
       cnt = 0;
       pthread_yield();
