@@ -8,8 +8,8 @@
 #include <algorithm>
 using namespace netlib;
 using namespace std;
-const int num_resource = 13000;
-const int num_threads = 100;
+const int num_resource = 28000;
+const int num_threads = 200;
 
 #define BITMUTEXTEST
 #define MUTEXTEST
@@ -33,7 +33,7 @@ class MyThread1: public Thread {
  protected:
   void Run() {
     for (int i = 0; i < num_resource; ++i) {
-      ScopedBitMutexLock lock(mu1, idx[i], 4);
+      ScopedBitMutexLock lock(mu1, idx[i], 5);
       arr1[idx[i]]++;
     }
   }

@@ -35,6 +35,7 @@
 #define _HASH_H_
 
 #include "config.hpp"
+#include <string>
 
 namespace netlib {
 /**
@@ -46,5 +47,39 @@ namespace netlib {
  * @return a unsiged int 64 hash value
  */
 uint64_t MurmurHash64(const void *key, int32_t len, uint32_t seed);
+
+
+template <typename T> struct hash {};
+
+template<>
+struct hash<std::string> {
+  std::size_t operator()(const std::string &s) {
+    std::size_t h = 0;
+    for (std::size_t i = 0; i < s.size(); ++i)
+      h = (h<<5) - h + s[i];
+    return h;
+  }
+};
+
+inline std::size_t string_hash(const char *s) {
+  std::size_t h = 0;
+  for (; *s; ++s) {
+    h = (h<<5) - h + *s;
+  }
+}
+
+template<>
+struct hash<char *> {
+  std::size_t operator()(char *s) {
+    return string_hash(s);
+  }
+};
+
+template<>
+struct hash<const char *> {
+  std::size_t operator()(const char *s) {
+    return string_hash(s);
+  }
+};
 }
 #endif /* _HASH_H_ */
