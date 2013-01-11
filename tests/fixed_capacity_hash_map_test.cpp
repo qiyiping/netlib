@@ -27,8 +27,28 @@ int main(int argc, char *argv[]) {
   std::cout << "--------------" << std::endl;
 
   std::cout << h["no"] << std::endl;
+  it = h.find("no");
+  it->second = 1111;
+  // it->first = "big"; // compiler error! key is const!
   for (it = h.begin(); it != h.end(); ++it) {
     std::cout << it->first << ":" << it->second << std::endl;
+  }
+  std::cout << h.size() << std::endl;
+  std::cout << h.capacity() << std::endl;
+  std::cout << "--------------" << std::endl;
+
+  HashMap<std::string, int32_t>::const_iterator const_it;
+  const_it = h.find("world");
+  std::cout << const_it->second << std::endl;
+  // const_it->second = 20; // compiler error! cannot change the value through const_iterator!
+  const_it = h.find("hello");
+  std::cout << (const_it == h.end()) << std::endl;
+  const_it = h.find("0");
+  std::cout << (const_it == h.end()) << std::endl;
+  std::cout << h.size() << std::endl;
+  std::cout << "--------------" << std::endl;
+  for (const_it = h.begin(); const_it != h.end(); ++const_it) {
+    std::cout << const_it->first << ":" << const_it->second << std::endl;
   }
   std::cout << h.size() << std::endl;
   std::cout << h.capacity() << std::endl;

@@ -40,8 +40,10 @@ namespace netlib {
 template <typename KeyType, typename ValueType>
 struct HashNode {
   typedef std::pair<KeyType, ValueType> data_type;
-  HashNode *next;
   data_type data;
+  HashNode *next;
+  HashNode(const data_type &d, HashNode *n=NULL)
+      : data(d), next(n) {}
 };
 
 template <typename KeyType, typename ValueType, typename HashFunc=hash<KeyType> >
@@ -51,8 +53,8 @@ template <typename KeyType, typename ValueType, typename HashFunc>
 struct HashMapIterator {
   typedef HashMap<KeyType, ValueType, HashFunc> hash_map;
   typedef HashMapIterator<KeyType, ValueType, HashFunc> iterator;
-  typedef HashNode<KeyType, ValueType> node_type;
-  typedef std::pair<KeyType, ValueType> data_type;
+  typedef HashNode<const KeyType, ValueType> node_type;
+  typedef std::pair<const KeyType, ValueType> data_type;
   hash_map *map;
   node_type *current;
 
@@ -77,19 +79,62 @@ struct HashMapIterator {
     return tmp;
   }
 
-  bool operator==(const iterator &rhs) {
+  bool operator==(const iterator &rhs) const {
     return rhs.current == current;
   }
 
-  bool operator!=(const iterator &rhs) {
+  bool operator!=(const iterator &rhs) const {
     return rhs.current != current;
   }
 
-  data_type &operator*() { return current->data; }
-  data_type *operator->() { return &current->data; }
+  data_type &operator*() const { return current->data; }
+  data_type *operator->() const { return &current->data; }
 };
 
-// TODO: add const iterator implementation
+template <typename KeyType, typename ValueType, typename HashFunc>
+struct HashMapConstIterator {
+  typedef HashMap<KeyType, ValueType, HashFunc> hash_map;
+  typedef HashMapConstIterator<KeyType, ValueType, HashFunc> const_iterator;
+  typedef HashMapIterator<KeyType, ValueType, HashFunc> iterator;
+  typedef HashNode<const KeyType, ValueType> node_type;
+  typedef const std::pair<const KeyType, ValueType> data_type;
+  const hash_map *map;
+  const node_type *current;
+
+  HashMapConstIterator() {}
+  HashMapConstIterator(const hash_map *m, const node_type *n)
+      :map(m), current(n) {}
+  HashMapConstIterator(const iterator &rhs)
+      :map(rhs.map), current(rhs.current) {}
+
+  const_iterator &operator++() {
+    const node_type *old = current;
+    current = current->next;
+    if (!current) {
+      std::size_t bucket_idx = map->get_index(old->data.first);
+      while (!current && ++bucket_idx < map->capacity())
+        current = map->buckets_[bucket_idx];
+    }
+    return *this;
+  }
+
+  const_iterator operator++(int) {
+    iterator tmp = *this;
+    ++*this;
+    return tmp;
+  }
+
+  bool operator==(const iterator &rhs) const {
+    return rhs.current == current;
+  }
+
+  bool operator!=(const iterator &rhs) const {
+    return rhs.current != current;
+  }
+
+  data_type &operator*() const { return current->data; }
+  data_type *operator->() const { return &current->data; }
+};
 
 /*
  * The number of buckets is fixed.
@@ -111,7 +156,7 @@ class HashMap {
   typedef KeyType key_type;
   typedef ValueType value_type;
   typedef HashFunc hasher_type;
-  typedef HashNode<KeyType, ValueType> node_type;
+  typedef HashNode<const KeyType, ValueType> node_type;
   typedef std::size_t size_type;
 
   HashMap(size_type capacity)
@@ -132,6 +177,8 @@ class HashMap {
 
   typedef HashMapIterator<KeyType, ValueType, HashFunc> iterator;
   friend struct HashMapIterator<KeyType, ValueType, HashFunc>;
+  typedef HashMapConstIterator<KeyType, ValueType, HashFunc> const_iterator;
+  friend struct HashMapConstIterator<KeyType, ValueType, HashFunc>;
 
   iterator begin() {
     for (size_type i = 0; i < capacity_; ++i)
@@ -140,13 +187,29 @@ class HashMap {
     return end();
   }
 
+  const_iterator begin() const {
+    for (size_type i = 0; i < capacity_; ++i)
+      if (buckets_[i])
+        return const_iterator(this, buckets_[i]);
+    return end();
+  }
+
   iterator end() { return iterator(this, NULL); }
+
+  const_iterator end() const { return const_iterator(this, NULL); }
 
   iterator find(const key_type &k) {
     size_type bucket_idx = get_index(k);
     node_type *p = buckets_[bucket_idx];
     for (; p && p->data.first != k; p = p->next) {}
     return iterator(this, p);
+  }
+
+  const_iterator find(const key_type &k) const {
+    size_type bucket_idx = get_index(k);
+    node_type *p = buckets_[bucket_idx];
+    for (; p && p->data.first != k; p = p->next) {}
+    return const_iterator(this, p);
   }
 
   void erase(const key_type &k) {
@@ -187,7 +250,7 @@ class HashMap {
     return p->data.second;
   }
 
-  size_type get_index(const key_type &k) {
+  size_type get_index(const key_type &k) const {
     return hasher_(k) & capacity_;
   }
  private:
@@ -196,7 +259,7 @@ class HashMap {
   hasher_type hasher_;
   size_type size_;
  private:
-  size_type roundup(size_type capacity) {
+  static size_type roundup(size_type capacity) {
     size_type c = 0;
     for (size_type i = 1; c < capacity; ++i) {
       c = (1 << i) - 1;
@@ -209,9 +272,9 @@ class HashMap {
     node_type *p = buckets_[bucket_idx];
     for (; p && p->data.first != k; p = p->next) {}
     if (!p) {
-      p = new node_type;
-      p->data.first = k;
-      p->next = buckets_[bucket_idx];
+      p = new node_type(
+          std::make_pair<const key_type, value_type>(k, value_type()),
+          buckets_[bucket_idx]);
       buckets_[bucket_idx] = p;
       size_++;
     }

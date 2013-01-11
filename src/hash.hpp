@@ -53,7 +53,7 @@ template <typename T> struct hash {};
 
 template<>
 struct hash<std::string> {
-  std::size_t operator()(const std::string &s) {
+  std::size_t operator()(const std::string &s) const {
     std::size_t h = 0;
     for (std::size_t i = 0; i < s.size(); ++i)
       h = (h<<5) - h + s[i];
@@ -71,56 +71,56 @@ inline std::size_t string_hash(const char *s) {
 
 template<>
 struct hash<char *> {
-  std::size_t operator()(char *s) {
+  std::size_t operator()(char *s) const {
     return string_hash(s);
   }
 };
 
 template<>
 struct hash<const char *> {
-  std::size_t operator()(const char *s) {
+  std::size_t operator()(const char *s) const {
     return string_hash(s);
   }
 };
 
 template<>
 struct hash<int8_t> {
-  std::size_t operator()(int8_t i) { return i; }
+  std::size_t operator()(int8_t i) const { return i; }
 };
 
 template<>
 struct hash<int16_t> {
-  std::size_t operator()(int16_t i) { return i; }
+  std::size_t operator()(int16_t i) const { return i; }
 };
 
 template<>
 struct hash<int32_t> {
-  std::size_t operator()(int32_t i) { return i; }
+  std::size_t operator()(int32_t i) const { return i; }
 };
 
 template<>
 struct hash<int64_t> {
-  std::size_t operator()(int64_t i) { return i; }
+  std::size_t operator()(int64_t i) const { return i; }
 };
 
 template<>
 struct hash<uint8_t> {
-  std::size_t operator()(uint8_t i) { return i; }
+  std::size_t operator()(uint8_t i) const { return i; }
 };
 
 template<>
 struct hash<uint16_t> {
-  std::size_t operator()(uint16_t i) { return i; }
+  std::size_t operator()(uint16_t i) const { return i; }
 };
 
 template<>
 struct hash<uint32_t> {
-  std::size_t operator()(uint32_t i) { return i; }
+  std::size_t operator()(uint32_t i) const { return i; }
 };
 
 template<>
 struct hash<uint64_t> {
-  std::size_t operator()(uint64_t i) { return i; }
+  std::size_t operator()(uint64_t i) const { return i; }
 };
 }
 #endif /* _HASH_H_ */
