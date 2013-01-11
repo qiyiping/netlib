@@ -89,6 +89,8 @@ struct HashMapIterator {
   data_type *operator->() { return &current->data; }
 };
 
+// TODO: add const iterator implementation
+
 /*
  * The number of buckets is fixed.
  * Based on `HashMap' and `BitMutex',
