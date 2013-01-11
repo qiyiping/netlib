@@ -66,6 +66,7 @@ inline std::size_t string_hash(const char *s) {
   for (; *s; ++s) {
     h = (h<<5) - h + *s;
   }
+  return h;
 }
 
 template<>
@@ -80,6 +81,46 @@ struct hash<const char *> {
   std::size_t operator()(const char *s) {
     return string_hash(s);
   }
+};
+
+template<>
+struct hash<int8_t> {
+  std::size_t operator()(int8_t i) { return i; }
+};
+
+template<>
+struct hash<int16_t> {
+  std::size_t operator()(int16_t i) { return i; }
+};
+
+template<>
+struct hash<int32_t> {
+  std::size_t operator()(int32_t i) { return i; }
+};
+
+template<>
+struct hash<int64_t> {
+  std::size_t operator()(int64_t i) { return i; }
+};
+
+template<>
+struct hash<uint8_t> {
+  std::size_t operator()(uint8_t i) { return i; }
+};
+
+template<>
+struct hash<uint16_t> {
+  std::size_t operator()(uint16_t i) { return i; }
+};
+
+template<>
+struct hash<uint32_t> {
+  std::size_t operator()(uint32_t i) { return i; }
+};
+
+template<>
+struct hash<uint64_t> {
+  std::size_t operator()(uint64_t i) { return i; }
 };
 }
 #endif /* _HASH_H_ */

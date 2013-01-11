@@ -37,6 +37,7 @@ if build_test:
     env.Program('uf_test', ['tests/uf_test.cpp', 'libnetlib.a'])
     env.Program('buffer_io_test', ['tests/buffer_io_test.cpp', 'libnetlib.a'])
     env.Program('bit_mutex_test', ['tests/bit_mutex_test.cpp', 'libnetlib.a'])
+    env.Program('fixed_capacity_hash_map_test', ['tests/fixed_capacity_hash_map_test.cpp', 'libnetlib.a'])
 
 build_samples = ARGUMENTS.get('build_samples', False)
 if build_samples:

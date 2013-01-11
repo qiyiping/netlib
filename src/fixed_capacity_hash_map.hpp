@@ -36,7 +36,7 @@
 #include "config.hpp"
 #include <utility>
 #include "hash.hpp"
-
+namespace netlib {
 template <typename KeyType, typename ValueType>
 struct HashNode {
   typedef std::pair<KeyType, ValueType> data_type;
@@ -44,7 +44,7 @@ struct HashNode {
   data_type data;
 };
 
-template <typename KeyType, typename ValueType, typename HashFunc>
+template <typename KeyType, typename ValueType, typename HashFunc=hash<KeyType> >
 class HashMap;
 
 template <typename KeyType, typename ValueType, typename HashFunc>
@@ -52,6 +52,7 @@ struct HashMapIterator {
   typedef HashMap<KeyType, ValueType, HashFunc> hash_map;
   typedef HashMapIterator<KeyType, ValueType, HashFunc> iterator;
   typedef HashNode<KeyType, ValueType> node_type;
+  typedef std::pair<KeyType, ValueType> data_type;
   hash_map *map;
   node_type *current;
 
@@ -65,7 +66,7 @@ struct HashMapIterator {
     if (!current) {
       std::size_t bucket_idx = map->get_index(old->data.first);
       while (!current && ++bucket_idx < map->capacity())
-        current = map.buckets_[bucket_idx];
+        current = map->buckets_[bucket_idx];
     }
     return *this;
   }
@@ -89,10 +90,20 @@ struct HashMapIterator {
 };
 
 /*
- * @class HashMap
- * It's a fixed buckets hash map implementation
+ * The number of buckets is fixed.
+ * Based on `HashMap' and `BitMutex',
+ * we can implement entry level lock free thread safe hash map.
+ * Usage:
+ *     HashMap<std::string, int> h(1000);
+ *     BitMutex mutex(h.capacity());
+ *
+ *     // lock entry
+ *     {
+ *       ScopedBitMutexLock lock(mutex, h.get_index("hello"));
+ *       // do something with h["hello"];
+ *     }
  */
-template <typename KeyType, typename ValueType, typename HashFunc=hash<KeyType> >
+template <typename KeyType, typename ValueType, typename HashFunc>
 class HashMap {
  public:
   typedef KeyType key_type;
@@ -101,16 +112,21 @@ class HashMap {
   typedef HashNode<KeyType, ValueType> node_type;
   typedef std::size_t size_type;
 
-  HashMap(size_type capacity) {
-    capacity_ = roundup(capacity);
-    size_ = 0;
+  HashMap(size_type capacity)
+      : capacity_(roundup(capacity)), size_(0) {
     buckets_ = new node_type*[capacity_];
     for (size_type i = 0; i < capacity_; ++i)
       buckets_[i] = NULL;
   }
 
+  ~HashMap() {
+    clear();
+    delete[] buckets_;
+  }
+
   size_type capacity() const { return capacity_; }
   size_type size() const { return size_; }
+  bool empty() const { return size_ == 0; }
 
   typedef HashMapIterator<KeyType, ValueType, HashFunc> iterator;
   friend struct HashMapIterator<KeyType, ValueType, HashFunc>;
@@ -119,6 +135,7 @@ class HashMap {
     for (size_type i = 0; i < capacity_; ++i)
       if (buckets_[i])
         return iterator(this, buckets_[i]);
+    return end();
   }
 
   iterator end() { return iterator(this, NULL); }
@@ -130,9 +147,47 @@ class HashMap {
     return iterator(this, p);
   }
 
-  void erase(const key_type &k) {}
-  void clear() {}
-  value_type &operator[](const key_type &k) {}
+  void erase(const key_type &k) {
+    size_type bucket_idx = get_index(k);
+    node_type *p = buckets_[bucket_idx];
+    if (p) {
+      if (p->data.first == k) {
+        buckets_[bucket_idx] = p->next;
+        delete p;
+        size_--;
+      } else {
+        for (; p->next && p->next->data.first != k; p = p->next) {}
+        if (p->next) {
+          node_type *q = p->next;
+          p->next = q->next;
+          delete q;
+          size_--;
+        }
+      }
+    }
+  }
+
+  void clear() {
+    for (size_type i = 0; i < capacity_; ++i) {
+      node_type *p = buckets_[i];
+      while (p) {
+        node_type *q = p->next;
+        delete p;
+        p = q;
+      }
+      buckets_[i] = NULL;
+    }
+    size_ = 0;
+  }
+
+  value_type &operator[](const key_type &k) {
+    node_type *p = find_or_insert(k);
+    return p->data.second;
+  }
+
+  size_type get_index(const key_type &k) {
+    return hasher_(k) & capacity_;
+  }
  private:
   const size_type capacity_;
   node_type **buckets_;
@@ -147,8 +202,19 @@ class HashMap {
     return c;
   }
 
-  size_type get_index(const key_type &k) {
-    return hasher_(k) & capacity_;
+  node_type *find_or_insert(const key_type &k) {
+    size_type bucket_idx = get_index(k);
+    node_type *p = buckets_[bucket_idx];
+    for (; p && p->data.first != k; p = p->next) {}
+    if (!p) {
+      p = new node_type;
+      p->data.first = k;
+      p->next = buckets_[bucket_idx];
+      buckets_[bucket_idx] = p;
+      size_++;
+    }
+    return p;
   }
 };
+}
 #endif /* _FIXED_CAPACITY_HASH_MAP_H_ */
