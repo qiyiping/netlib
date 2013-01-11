@@ -258,6 +258,7 @@ class HashMap {
   node_type **buckets_;
   hasher_type hasher_;
   size_type size_;
+
  private:
   static size_type roundup(size_type capacity) {
     size_type c = 0;
@@ -280,6 +281,8 @@ class HashMap {
     }
     return p;
   }
+
+  DISALLOW_COPY_AND_ASSIGN(HashMap);
 };
 }
 #endif /* _FIXED_CAPACITY_HASH_MAP_H_ */
