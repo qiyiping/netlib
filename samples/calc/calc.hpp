@@ -7,75 +7,123 @@
 #include "dispatch_handler.hpp"
 #include "buffer_io.hpp"
 #include "socket_io.hpp"
+#include "serialize.hpp"
+#include <glog/logging.h>
 
 using namespace netlib;
+
+class CalcRequest: public Serializable {
+ public:
+  bool Serialize(IOBase *io) {
+    io->WriteDouble(arg1);
+    io->WriteDouble(arg2);
+    return true;
+  }
+  bool Deserialize(IOBase *io) {
+    io->ReadDouble(&arg1);
+    io->ReadDouble(&arg2);
+    return true;
+  }
+  double arg1;
+  double arg2;
+};
+
+class CalcResponse: public Serializable {
+ public:
+  bool Serialize(IOBase *io) {
+    io->WriteDouble(result);
+    return true;
+  }
+  bool Deserialize(IOBase *io) {
+    io->ReadDouble(&result);
+    return true;
+  }
+  double result;
+};
 
 class CalcHandler: public DispatchHandler {
  public:
   CalcHandler(int32_t timeout = -1): DispatchHandler(timeout) {
     AddProcessor("add", std::tr1::bind(&CalcHandler::Add, this, std::tr1::placeholders::_1, std::tr1::placeholders::_2));
     AddProcessor("sub", std::tr1::bind(&CalcHandler::Sub, this, std::tr1::placeholders::_1, std::tr1::placeholders::_2));
+    AddProcessor("sum", std::tr1::bind(&CalcHandler::Sum, this, std::tr1::placeholders::_1, std::tr1::placeholders::_2));
   }
-  void Add(boost::shared_ptr<std::string> request, boost::shared_ptr<std::string> response) {
-    BufferIO in(*request);
-    uint8_t id_len = 0;
-    if (in.ReadUInt8(&id_len) != 1)
-      return;
-    if (in.SkipBytes(id_len) != id_len)
-      return;
-    double a = 0;
-    double b = 0;
-    if (in.ReadDouble(&a) != sizeof(double))
-      return;
-    if (in.ReadDouble(&b) != sizeof(double))
-      return;
+  void Add(const std::string &request, std::string *response) {
+    BufferIO in(request);
+    CalcRequest req;
+    req.Deserialize(&in);
+    CalcResponse resp;
+    resp.result = req.arg1 + req.arg2;
     BufferIO out;
-    out.WriteDouble(a+b);
+    resp.Serialize(&out);
     *response = out.GetBuffer();
   }
 
-  void Sub(boost::shared_ptr<std::string> request, boost::shared_ptr<std::string> response) {
-    BufferIO in(*request);
-    uint8_t id_len = 0;
-    if (in.ReadUInt8(&id_len) != 1)
-      return;
-    if (in.SkipBytes(id_len) != id_len)
-      return;
-    double a = 0;
-    double b = 0;
-    if (in.ReadDouble(&a) != sizeof(double))
-      return;
-    if (in.ReadDouble(&b) != sizeof(double))
-      return;
+  void Sub(const std::string &request, std::string *response) {
+    BufferIO in(request);
+    CalcRequest req;
+    req.Deserialize(&in);
+    CalcResponse resp;
+    resp.result = req.arg1 - req.arg2;
     BufferIO out;
-    out.WriteDouble(a-b);
+    resp.Serialize(&out);
+    *response = out.GetBuffer();
+  }
+
+  void Sum(const std::string &request, std::string *response) {
+    BufferIO in(request);
+    CalcRequest req;
+    req.Deserialize(&in);
+
+    CalcResponse resp;
+    resp.result = 0.0;
+    for (; req.arg1 < req.arg2; req.arg1 += 1.0) {
+      resp.result += req.arg1;
+    }
+
+    BufferIO out;
+    resp.Serialize(&out);
     *response = out.GetBuffer();
   }
 };
 
 class CalcClient {
  public:
-  CalcClient(const std::string &host, const std::string &port): socket_(host, port), io_(socket_) {}
+  CalcClient(const std::string &host, const std::string &port): socket_(host, port), io_(socket_) { CHECK(socket_.IsConnected()); }
   double Add(double a, double b) {
-    std::string id = BuildHeader("add");
-    BufferIO buf(id);
-    buf.WriteDouble(a);
-    buf.WriteDouble(b);
+    BufferIO buf(BuildHeader("add"));
+    CalcRequest req;
+    req.arg1 = a;
+    req.arg2 = b;
+    req.Serialize(&buf);
     io_.WriteString(buf.GetBuffer());
-    double ret = 0;
-    io_.ReadDouble(&ret);
-    return ret;
+    CalcResponse resp;
+    resp.Deserialize(&io_);
+    return resp.result;
   }
 
   double Sub(double a, double b) {
-    std::string id = BuildHeader("sub");
-    BufferIO buf(id);
-    buf.WriteDouble(a);
-    buf.WriteDouble(b);
+    BufferIO buf(BuildHeader("sub"));
+    CalcRequest req;
+    req.arg1 = a;
+    req.arg2 = b;
+    req.Serialize(&buf);
     io_.WriteString(buf.GetBuffer());
-    double ret = 0;
-    io_.ReadDouble(&ret);
-    return ret;
+    CalcResponse resp;
+    resp.Deserialize(&io_);
+    return resp.result;
+  }
+
+  double Sum(double a, double b) {
+    BufferIO buf(BuildHeader("sum"));
+    CalcRequest req;
+    req.arg1 = a;
+    req.arg2 = b;
+    req.Serialize(&buf);
+    io_.WriteString(buf.GetBuffer());
+    CalcResponse resp;
+    resp.Deserialize(&io_);
+    return resp.result;
   }
 
   virtual ~CalcClient() {}

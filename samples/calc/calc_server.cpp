@@ -17,13 +17,17 @@ void usage(const char *name) {
 
 int main(int argc, char *argv[]) {
   if (argc < 2) {
-    usage(argv[1]);
+    usage(argv[0]);
     return -1;
   }
   SocketServer *server;
   boost::shared_ptr<RequestHandler> handler(new CalcHandler());
   std::string host = "0.0.0.0";
   std::string port = "5555";
+  if (argc > 3) {
+    host = argv[2];
+    port = argv[3];
+  }
   if (strcmp(argv[1], "simple") == 0) {
     server = new SimpleSocketServer(host, port, handler);
   } else if (strcmp(argv[1], "event") == 0) {
@@ -34,7 +38,7 @@ int main(int argc, char *argv[]) {
     boost::shared_ptr<ThreadPool> tp(new ThreadPool(10, 100));
     server = new TPSocketServer(host, port, handler, tp);
   } else {
-    usage(argv[1]);
+    usage(argv[0]);
     return -1;
   }
   server->Serve();

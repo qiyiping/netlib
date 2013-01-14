@@ -44,7 +44,7 @@ std::string ParseHeader(const std::string &str);
 
 class DispatchHandler: public RequestHandler {
  public:
-  typedef std::tr1::function<void (boost::shared_ptr<std::string>, boost::shared_ptr<std::string>)> ProcessorType;
+  typedef std::tr1::function<void (const std::string &, std::string *)> ProcessorType;
 
   DispatchHandler(int32_t timeout = -1): RequestHandler(timeout) {}
   bool AddProcessor(const std::string &id, const ProcessorType &processor);

@@ -1,6 +1,7 @@
 env = Environment(CCFLAGS='-O0 -g -Wall -Wextra',
                   CPPPATH='src',
-                  LIBS=['glog', 'pthread'])
+                  LIBS=['glog', 'pthread'],
+                  LINKFLAGS="--static")
 
 netlib_src = Split("""
 src/bloom_filter.cpp

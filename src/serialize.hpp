@@ -30,56 +30,15 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "dispatch_handler.hpp"
-#include "buffer_io.hpp"
-#include <glog/logging.h>
-
+#ifndef _SERIALIZE_H_
+#define _SERIALIZE_H_
+#include "io.hpp"
 namespace netlib {
-std::string BuildHeader(const std::string &id) {
-  BufferIO io;
-  io.WriteUInt8(id.length());
-  io.WriteString(id);
-  return io.GetBuffer();
+class Serializable {
+ public:
+  virtual bool Serialize(IOBase *io) = 0;
+  virtual bool Deserialize(IOBase *io) = 0;
+};
 }
 
-std::string ParseHeader(const std::string &str) {
-  BufferIO io;
-  io.WriteBytes(str.c_str(), 1);
-  uint8_t len = 0;
-  std::string ret;
-  if (io.ReadUInt8(&len) == 1 && str.length() > 1u+len) {
-    ret = str.substr(1, len);
-  } else {
-    LOG(ERROR) << "failed to parse header";
-  }
-  return ret;
-}
-
-DispatchHandler::~DispatchHandler() {}
-
-void DispatchHandler::Process(boost::shared_ptr<std::string> request, boost::shared_ptr<std::string> response) {
-  std::string id = ParseHeader(*request);
-  if (processor_map_.find(id) == processor_map_.end()) {
-    LOG(ERROR) << "cannot find & execute processor: " << id;
-    return;
-  }
-  processor_map_[id](request->substr(1+id.length()), &(*response));
-}
-
-bool DispatchHandler::AddProcessor(const std::string &id, const ProcessorType &processor) {
-  processor_map_[id] = processor;
-  return true;
-}
-
-bool DispatchHandler::DeleteProcessor(const std::string &id) {
-  std::map<std::string, ProcessorType>::iterator iter;
-  iter = processor_map_.find(id);
-  if (iter == processor_map_.end()) {
-    LOG(ERROR) << "cannot find & delete processor: " << id;
-    return false;
-  }
-  processor_map_.erase(iter);
-  return true;
-}
-
-}
+#endif /* _SERIALIZE_H_ */
